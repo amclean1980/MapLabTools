@@ -1,0 +1,173 @@
+#!/bin/bash
+#
+# parse the design.fsf file to get the relevant info
+# 1st input: design.fsf (or whatever it's called)
+#
+
+Usage() {
+  cat  <<EOF
+
+fls_parse_fsf
+-------------
+
+Parse the FEAT design.fsf file for pertinent information.  At present this 
+script only allows you to get the information listed below.
+
+fsl_parse_fsf [options] design.fsf
+
+  -a  print out all information
+  -o  print out the processing directory
+  -r  print out run information - tr, # volumes & # volumes deleted
+  -p  print preprocessing information
+  -i  print filenames for anat, standard image and functional file
+  -m  print model properties
+  -c  print the condition list along with on/offset files (like BV prt)
+
+
+EOF
+  exit 1
+}
+
+function fep_fmri {
+  local _param
+  # use sed to parse the file looking for the pattern fmri( <param> )
+  # then print it. !d means don't delete lines matching the pattern.
+  # when a pattern is found, 'q' quits so we dont read the whole file.
+  _param=$( sed "/fmri(${1})/!d;q" "$DESIGN_FILE" | cut -d ' ' -f 3 )
+  echo "$_param"
+}
+function fep {
+  local _param
+  # use sed to parse the file looking for the pattern fmri( <param> )
+  # then print it. !d means don't delete lines matching the pattern.
+  # when a pattern is found, 'q' quits so we dont read the whole file.
+  _param=$( sed "/${1}/!d;q" "$DESIGN_FILE" | cut -d ' ' -f 3 )
+  echo "$_param"
+}
+
+function get_outputdir {
+  echo "output dir: $( fep_fmri outputdir )"
+}
+
+function get_run_properties {
+  _tvols=$( fep_fmri npts )
+  _skipvols=$( fep_fmri ndelete )
+  _usedvols=$(( $_tvols - $_skipvols ))
+  echo "tr: $( fep_fmri tr )"
+  echo "vols: $_tvols $_skipvols $_usedvols"
+  echo "slice timing: $( fep_fmri st )"
+}
+
+function get_preprocessing_options {
+  echo
+}
+
+function get_input_image_files {
+echo "anat: $( fep highres_files )"
+echo "std: $( fep_fmri regstandard )"
+echo "functional: $( fep feat_files )"
+}
+
+function get_model_properties {
+  echo "prewhiten: $( fep_fmri prewhiten_yn )"
+  echo "use mc: $( fep_fmri motionevs )"
+  echo "temp. derivative: $( fep_fmri deriv_yn1 )"
+  echo "nr cond evs: $( fep_fmri evs_orig )"
+  echo "nr total evs: $( fep_fmri evs_real )" 
+}
+
+function get_condition_list {
+  _nrCond=$( fep_fmri evs_orig )
+
+  for (( i = 1; i <= $_nrCond; i++ )); do
+    echo "$i: $( fep_fmri evtitle${i} ) $( fep_fmri custom${i} )"
+  done
+}
+
+function get_all {
+  echo "-------------------------------------------------------------------------------"
+  get_outputdir
+  echo "-------------------------------------------------------------------------------"
+  get_run_properties
+  echo "-------------------------------------------------------------------------------"
+  get_condition_list
+  echo "-------------------------------------------------------------------------------"
+  get_input_image_files
+  echo "-------------------------------------------------------------------------------"  
+}
+
+if [ "$#" -eq 0 ]; then
+  echo
+  echo "1st input is the full path to the fsf file"
+  echo
+  exit 1
+fi
+
+opts=()
+while (( "$#" > 1 )); do
+
+  if [ "$1" = "-o" ]; then
+    opts=( ${opts[@]} "o" )
+    shift
+  elif [ "$1" = "-r" ]; then
+    opts=( ${opts[@]} "r" )
+    shift
+  elif [ "$1" = "-p" ]; then
+    opts=( ${opts[@]} "p" )
+    shift
+  elif [ "$1" = "-i" ]; then
+    opts=( ${opts[@]} "i" )
+    shift
+  elif [ "$1" = "-m" ]; then
+    opts=( ${opts[@]} "m" )
+    shift
+  elif [ "$1" = "-c" ]; then
+    opts=( ${opts[@]} "c" )
+    shift
+  elif [ "$1" = "-a" ]; then
+    opts=( "a" )
+    shift
+  elif [ "$1" = "-f" ]; then
+    shift
+    #DESIGN_FILE="$1"
+  else
+    echo
+    echo "Error: Invalid input options '$1'"
+    Usage
+    exit 1
+  fi
+done
+
+# clean up opts -- if we have 'a' then we dont' need the rest.
+# this basically prints out opt array and sorts it. Because sort
+# acts on a line-by-line basis, tr is used to replace spaces with newline
+# before sort, then after sort the newlines are replaced by spaces again.
+# output is reassigned back to opts.
+opts=( $( echo "${opts[@]}" | tr ' ' '\n' | sort | tr '\n' ' ' ) )
+if [ "${opts[0]}" = "a" ]; then
+  opts=("a")
+fi
+
+
+# store design file path in global var.  Also, check to see if 
+# it exists!
+DESIGN_FILE="$1"
+if [ ! -f "$DESIGN_FILE" ]; then
+  echo
+  echo " input file: '$DESIGN_FILE' doesn't exist "
+  echo
+  Usage
+  exit 1
+fi
+
+for o in "${opts[@]}"; do
+  case "$o" in
+   o) get_ouptputdir ;;
+   r) get_run_properties ;;
+   p) get_preprocessing_options ;;
+   i) get_input_image_files ;;
+   c) get_condition_list ;;
+   m) get_model_properties ;;
+   a) get_all ;;
+ esac
+done
