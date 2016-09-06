@@ -1,0 +1,25 @@
+#!/bin/bash
+
+
+rootDir="$1"
+runId="$2"
+featDir="${rootDir}/${runId}/analysis.feat"
+outputDir="${rootDir}/glms/native"
+nrCond="$3"
+
+if [ ! -d "${outputDir}" ]; then
+  mkdir -p "${outputDir}"
+fi
+
+if [ ! -d "${rootDir}/${runId}/analysis.feat" ]; then
+  echo
+  echo "Error: no analysis.feat directory in ${rootDir}"
+  exit 1
+fi
+
+declare -a files
+for ((c=1; c <= "${nrCond}"; c++)); do
+  files[$c]="${rootDir}/${runId}/analysis.feat/stats/cope${c}.nii.gz"
+done
+$FSLDIR/bin/fslmerge -t "${outputDir}/${runId}_cope4D" "${files[@]}"
+

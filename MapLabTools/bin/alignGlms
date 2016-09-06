@@ -1,0 +1,36 @@
+#!/bin/bash
+
+
+rootDir="$1"
+refId="$2"
+outputDir="${rootDir}/glms/aligned-to-${refId}"
+
+if [ ! -d "${outputDir}" ]; then
+  mkdir -p "${outputDir}"
+fi
+
+files=($( find "$rootDir/glms/native" -name '*_cope4D.nii.gz' ))
+
+for f in "${files[@]}"; do
+  id=$( echo $f | sed -n 's/.*\([0-9]\{3\}\)_cope4D.*/\1/p' )
+  if [ -z "$id" ]; then
+    echo
+    echo "Error: couldn't extract series id"
+    echo
+    exit 1
+  fi
+
+  if [ "$id" != "$refId" ]; then
+
+    $FSLDIR/bin/flirt \
+      -in "${f}" \
+      -ref "${rootDir}/glms/native/${refId}_cope4D" \
+      -interp sinc \
+      -init "${rootDir}/run-alignment/s${id}_firstvol-to-s${refId}_firstvol.mat" \
+      -applyxfm \
+      -out "${outputDir}/${id}_cope4D" 
+  else
+    cp "${f}" "${outputDir}"
+  fi
+
+done

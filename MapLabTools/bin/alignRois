@@ -1,0 +1,24 @@
+#!/bin/bash
+
+
+rootDir="$1"
+refId="$2"
+outputDir="${rootDir}/rois/aligned-to-${refId}"
+
+if [ ! -d "${outputDir}" ]; then
+  mkdir -p "${outputDir}"
+fi
+
+files=($( find "$rootDir/rois/standard" -name '*nii.gz' ))
+
+for f in "${files[@]}"; do
+
+  $FSLDIR/bin/flirt \
+    -in "${f}" \
+    -ref "${rootDir}/run-alignment/s${refId}_firstvol" \
+    -interp nearestneighbour \
+    -init "${rootDir}/${refId}/analysis.feat/reg/standard2example_func.mat" \
+    -applyxfm \
+    -out "${outputDir}/$( basename ${f} )" 
+
+done
