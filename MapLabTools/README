@@ -1,0 +1,12 @@
+This is a toolbox for the MapLab
+
+The toolbox contains a mixture of bash scripts and matlab classes/scripts to help process
+data.
+
+
+Required:
+- Matlab
+- Neuroelf
+- FSL
+- CoSMoToolbox
+
