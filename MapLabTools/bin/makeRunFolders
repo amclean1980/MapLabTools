@@ -1,0 +1,54 @@
+#!/bin/bash
+# This script is to be run after the dicom to nifti conversion.  Files will be
+# orginazed into folders
+
+if [ "$#" -ne 1 ]; then
+  echo
+  echo "Must pass an input directory to organize"
+  echo
+  exit 1
+fi
+
+if [ ! -d "$1" ]; then
+  echo
+  echo "$1 is not a valid directory"
+  echo
+  exit 1
+fi
+
+
+dir=$( cd "$1"; echo `pwd` )
+
+
+logfile="$dir/$(basename $0).log"
+echo $logfile
+
+# get all the file nifti files
+files=($(find "$dir" -name '*.nii.gz'))
+
+
+# define regular expression for the file name.  We're expecting
+# (subject id)s(series #)a(acq #).  The full path will be excluded
+# by only doing regex on the basename.
+
+pat='(.*)s([0-9]{3})a([0-9]{3,4}).*nii.gz'
+for f in "${files[@]}"; do
+  bn=$(basename "$f")
+  pn=$(dirname "$f")
+  echo $f
+  if [[ $bn =~ $pat ]]; then
+    id="${BASH_REMATCH[1]}"
+    series="${BASH_REMATCH[2]}"
+    acq="${BASH_REMATCH[3]}"
+
+    curDir="$dir/$series"
+    mkdir -p "$curDir"
+    mv "$f" $curDir
+    
+  else
+    echo "$(date) ERROR: couldn't parse filename for '$f'" >> $logfile
+  fi
+done
+
+
+

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+echo "this is a test script"
+echo "here are the input arguments: "
+counter=0
+while [ "$#" -gt 0 ]; do
+  sleep 1
+  echo "${counter}: $1"
+  shift
+  ((counter++))
+done
+
+
