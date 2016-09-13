@@ -1,7 +1,7 @@
 classdef FSLDesignFileGenerator < Module
   
   properties (Constant)
-    TEMPLATE_FILE = '/Data/MRI-Data/McLean/MapLabTools/template.fsf';
+    TEMPLATE_FILE = fullfile(getenv('MAPLABDIR'),'Resources','template.fsf');
     NEW_FILE = 'design.fsf';
   end
   
