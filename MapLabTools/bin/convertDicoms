@@ -71,7 +71,7 @@ else
   exit 3
 fi
 
-/Data/MRI-Data/McLean/MapLabTools/bin/dcm2nii64 \
+${MAPLABDIR}/bin/dcm2nii64 \
   -4 Y \
   -3 N \
   -a Y \
@@ -79,7 +79,7 @@ fi
   -e Y \
   -f N \
   -g Y \
-  -i Y \
+  -i N \
   -k 0 \
   -n Y \
   -p N \
