@@ -6,6 +6,7 @@ classdef (Abstract) CosmoModule
     
     subjId = '';
     rootDir = '';
+    outputDir = '';  % defaults to rootDir/subjId.
     
     inputFileNames = cell(0,1);
     outputFileNames = cell(0,1);
@@ -16,7 +17,7 @@ classdef (Abstract) CosmoModule
     nrRuns = 0;
     
     logFileName = '';
-    ds = [];
+    ds = cell(0,1);
     
     % general options
     removeUselessData = true;
@@ -27,21 +28,25 @@ classdef (Abstract) CosmoModule
     
     function obj = CosmoModule(id, pn)
       obj.subjId = id;
-      if ~exist(pn,'dir')
+      if ~exist(pn,'dir') 
         error('Error: input path %s does not exist', pn);
       end
-      obj.rootDir = pn;      
+      if ~exist(fullfile(pn,id), 'dir')
+        error('Error: input path %s does not exist', fullfile(pn,id));
+      end
+      obj.rootDir = pn;
+      obj.outputDir = fullfile(pn,id);
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function obj = setInputFileNames(obj, fns)
       % ensure proper format
       if ~iscell(fns)
-        error('Input files must be in a cell array');
+        error('Error: Input files must be in a cell array');
       end
       % ensure files exist
       for f = 1:length(fns)
         if ~exist(obj.getFullFileName(fns{f}),'file')
-          error('Input file %s does not exist', fns{f});
+          error('Error: Input file %s does not exist', fns{f});
         end
       end
       obj.inputFileNames = fns(:);
@@ -55,12 +60,12 @@ classdef (Abstract) CosmoModule
     function obj = setMaskFileNames(obj, fns)
       % ensure proper format
       if ~iscell(fns)
-        error('Input mask files must be in a cell array');
+        error('Error: Input mask files must be in a cell array');
       end
       % ensure files exist
       for f = 1:length(fns)
         if ~exist(obj.getFullFileName(fns{f}),'file')
-          error('Input file %s does not exist', fns{f});
+          error('Error: Input file %s does not exist', fns{f});
         end
       end
       obj.maskFileNames = fns(:);
@@ -71,11 +76,10 @@ classdef (Abstract) CosmoModule
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     function obj = setRemoveUselessData(obj, bool)
-      if b == 0
-        obj.removeUselessData = false;
-      else
-        obj.removeUselessData = true;
+      if ~isnumeric(bool) && ~logical(bool)
+        error('remove useless data requires a boolean input');
       end
+      obj.removeUselessData = logical(bool);
     end
     
     function bool = getRemoveUselessData(obj)
@@ -96,17 +100,28 @@ classdef (Abstract) CosmoModule
       names = obj.conditionNames;
     end    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function obj = setDataStructure(obj, ds)
+    function obj = setDataStructure(obj, ds, maskNr)
       if ~cosmo_check_dataset(ds)
         error('Error: cosmo dataset is invalid');
       end
-      obj.ds = ds;
+      obj.ds{maskNr} = ds;
     end
     
-    function ds = getDataStructure(obj)
-      ds = obj.ds;
+    function ds = getDataStructure(obj, maskNr)
+      ds = obj.ds{maskNr};
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    function obj = setOutputDir(obj,pn)
+      if ~exist(pn,'dir')
+        error('Error: output path "pn" doesn''t exist');
+      end
+      obj.outputDir = pn;
+    end
+    
+    function pn = getOutputDir(obj)
+      pn = obj.outputDir;
+    end
     
   end % end public methods
   
@@ -119,12 +134,12 @@ classdef (Abstract) CosmoModule
   methods (Access = protected)
   
     % method to load the input data.  We're assuming
-    function obj = loadDataFiles(obj)
+    function obj = loadDataFiles(obj, maskNr)
       
       % load even runs
       for f = 1:length(obj.inputFileNames)
         fn = obj.getFullFileName(obj.inputFileNames{f,1});
-        mfn = obj.getFullFileName(obj.maskFileNames{1});
+        mfn = obj.getFullFileName(obj.maskFileNames{maskNr});
         current = cosmo_fmri_dataset(fn,...
           'mask', mfn,...
           'targets', 1:obj.nrConds,...
@@ -133,18 +148,20 @@ classdef (Abstract) CosmoModule
         
         % merge the datasets.
         if f == 1
-          obj.ds = current;
+          obj.ds{maskNr} = current;
         else
-          obj.ds = cosmo_stack({obj.ds, current});
+          obj.ds{maskNr} = cosmo_stack({obj.ds{maskNr}, current});
         end
       end % for
       
       % remove bad voxels
       if obj.removeUselessData == true
-        obj.ds = cosmo_remove_useless_data(obj.ds);
+        obj.ds{maskNr} = cosmo_remove_useless_data(obj.ds{maskNr});
       end
       
     end % loadDataFiles
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % if the input is a relative path, construct full path from
     % the rootDir and subjId.  Of not empty, return unchanged.
@@ -152,6 +169,8 @@ classdef (Abstract) CosmoModule
       [p,f,e] = fileparts(inputFileName);
       if isempty(p)
         fn = fullfile(obj.rootDir, obj.subjId, [f e]);
+      elseif ~isdir(p)
+        fn = fullfile(obj.rootDir, obj.subjId, p, [f e]);
       else
         fn = inputFileName;
       end
@@ -163,13 +182,12 @@ classdef (Abstract) CosmoModule
     
     function fid = openLogFile(fn)
       
-      fid = fopen(fn,'a')
+      %fid = fopen(fn,'a');
       
     end
     
     function closeLogFile
-      
-      
+ 
     end
     
   end  % end methods
