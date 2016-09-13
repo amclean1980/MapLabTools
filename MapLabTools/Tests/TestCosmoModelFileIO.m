@@ -21,10 +21,10 @@ classdef TestCosmoModelFileIO < matlab.unittest.TestCase
       c = CosmoModelFileIO();
       c = c.parse(testCase.fn1);
       
-      testCase.verifyEqual(c.name, testCase.name);
-      testCase.verifyEqual(c.nrCond, testCase.nrCond);
-      testCase.verifyEqual(c.mat, testCase.mat);
-      testCase.verifyEqual(c.conditions, testCase.conds);
+      testCase.verifyEqual(c.getName(), testCase.name);
+      testCase.verifyEqual(c.getNrConditions(), testCase.nrCond);
+      testCase.verifyEqual(c.getConditions(), testCase.conds);
+      testCase.verifyEqual(c.getMatrix(), testCase.mat);
       
     end
     
@@ -42,10 +42,10 @@ classdef TestCosmoModelFileIO < matlab.unittest.TestCase
       c2 = c2.parse(testCase.fn1);
       
       
-      testCase.verifyEqual(c.name, c2.name);
-      testCase.verifyEqual(c.nrCond, c2.nrCond);
-      testCase.verifyEqual(c.conditions, c2.conditions);
-      testCase.verifyEqual(c.mat, c2.mat);
+      testCase.verifyEqual(c.getName(), c2.getName());
+      testCase.verifyEqual(c.getNrConditions(), c2.getNrConditions());
+      testCase.verifyEqual(c.getConditions(), c2.getConditions());
+      testCase.verifyEqual(c.getMatrix(), c2.getMatrix());
     end
     
     

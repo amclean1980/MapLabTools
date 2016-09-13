@@ -31,26 +31,46 @@ classdef CosmoModelFileIO
 
     function obj = setFileName(obj, fn)
       obj.fn = fn;
+    end 
+    
+    function fn = getFileName(obj)
+      fn = obj.fn;
     end
     
     function obj = setName(obj, name)
       obj.name = name;
     end
     
+    function name = getName(obj)
+      name = obj.name;
+    end
+    
     function obj = setConditions(obj, conds)
       if ~iscell(conds)
         error('Error: conditions names must be a cell array');
       end
-      obj.conditions = conds;
+      obj.conditions = conds(:);
       obj.nrCond = length(obj.conditions);
+    end
+    
+    function conds = getConditions(obj)
+      conds = obj.conditions(:);
     end
     
     function obj = setNrConditions(obj, n)
       obj.nrCond = n;
     end
     
+    function n = getNrConditions(obj)
+      n = obj.nrCond;
+    end
+    
     function obj = setMatrix(obj, mat)
       obj.mat = mat;
+    end
+    
+    function mat = getMatrix(obj)
+      mat = obj.mat;
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -63,7 +83,6 @@ classdef CosmoModelFileIO
       obj.fn = fn;
 
       try
-        
         fid = fopen(obj.fn,'r');
         while 1
           line = fgetl(fid);
@@ -81,6 +100,7 @@ classdef CosmoModelFileIO
             elseif (strcmp(r{1}{1}, 'names'))
               %split string using comma as seperator
               obj.conditions = strtrim(regexp(r{1}{2},',','split'));
+              obj.conditions = obj.conditions(:);
             elseif (strcmp(r{1}{1}, 'matrix'))
               obj.mat = zeros(obj.nrCond,obj.nrCond);
               % read the next set of lines
@@ -112,10 +132,14 @@ classdef CosmoModelFileIO
         fprintf(fid, 'name: %s\n', obj.name);
         fprintf(fid, 'nrCond: %d\n', obj.nrCond);
         fprintf(fid, 'names: ');
-        for c = 1:obj.nrCond
+        % write out conditions
+        for c = 1:obj.nrCond-1
           fprintf(fid, '%s, ', obj.conditions{c});
         end
+        fprintf(fid, '%s', obj.conditions{obj.nrCond});
         fprintf(fid,'\n');
+        
+        fprintf(fid,'matrix:\n');
         for r = 1:obj.nrCond
           for c = 1:obj.nrCond
             fprintf(fid, '%.6f ', obj.mat(r,c));
@@ -126,7 +150,7 @@ classdef CosmoModelFileIO
         
       catch ME
         fclose(fid);
-        rethow(ME)
+        rethrow(ME)
       end
      
     end
