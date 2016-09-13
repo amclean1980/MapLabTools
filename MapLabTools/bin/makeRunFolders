@@ -41,9 +41,10 @@ for f in "${files[@]}"; do
     series="${BASH_REMATCH[2]}"
     acq="${BASH_REMATCH[3]}"
 
-    curDir="$dir/$series"
+    curDir="$dir/r$series"
+    newFileName=$( echo "${bn}" | sed -n 's/a[0-9]\{3,4\}//p' | sed -n 's/s/r/p' )
     mkdir -p "$curDir"
-    mv "$f" $curDir
+    mv "$f" $curDir/$newFileName
     
   else
     echo "$(date) ERROR: couldn't parse filename for '$f'" >> $logfile
