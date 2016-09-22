@@ -155,9 +155,13 @@ classdef CosmoModelFileIO
      
     end
     
+    function Model = getRSAToolboxModel(obj)
+      Model = struct('RDM', obj.mat, 'color', [1 1 0], 'name', obj.name); 
+    end
+    
   end
   
-  
+    
   methods (Access = private)
     
     % make sure the everything is the same size
