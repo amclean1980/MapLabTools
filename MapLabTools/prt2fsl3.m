@@ -1,4 +1,4 @@
-function dm=prt2fsl3(file)
+function prt2fsl3(file, tr)
   %file = '/Data/MRI-Data/McLean/MotorAuditoryLocalizer/PRTs/MotorLocalizer_order1.prt'
   prt=xff(file);
 
@@ -15,8 +15,8 @@ function dm=prt2fsl3(file)
     filename = sprintf('%s_%s%s', fullfile(p,f), prt.Cond(c).ConditionName{1}, '.txt');
     fid = fopen (filename,'w');
     for e = 1:prt.Cond(c).NrOfOnOffsets
-      onset = prt.Cond(c).OnOffsets(e,1);
-      duration = prt.Cond(c).OnOffsets(e,2) - onset;
+      onset = (prt.Cond(c).OnOffsets(e,1) - 1)*tr; % first bv volume is 1, but this coincides with time 0.
+      duration = (prt.Cond(c).OnOffsets(e,2) - prt.Cond(c).OnOffsets(e,1) + 1)*tr;
       weight = 1;
       fprintf(fid, '%.6f\t%.6f\t%.6f\n', onset, duration, weight);
     end

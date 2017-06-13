@@ -92,7 +92,7 @@ MDSRDMs({ssRDMs, Models}, userOptions);
 roiIndex = 1;% index of the ROI for which the group average RDM will serve 
 % as the reference RDM. 
 for i=1:numel(Models)
-    models{i}=Models(i);
+    modelsCells{i}=Models(i);
 end
 userOptions.RDMcorrelationType='Kendall_taua';
 userOptions.RDMrelatednessTest = 'subjectRFXsignedRank';
@@ -103,3 +103,23 @@ userOptions.candRDMdifferencesTest = 'subjectRFXsignedRank';
 userOptions.candRDMdifferencesThreshold = 0.05;
 userOptions.candRDMdifferencesMultipleTesting = 'none';
 stats_p_r=compareRefRDM2candRDMs(sRDMs(roiIndex,:), models, userOptions);
+
+% sRDMsCells = {};
+% for i = 1:size(sRDMs,2)
+%   sRDMsCells{i} = sRDMs(1,i);
+% end
+% stats_p_r=compareRefRDM2candRDMs(models{1}, sRDMsCells, userOptions);
+% 
+
+
+
+
+
+
+
+
+
+
+
+
+
